@@ -1,0 +1,41 @@
+{% load static %}
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sortedchef2</title>
+ <!-- <link rel="stylesheet" href="{% static 'css/jquery-ui.css' %}"> -->
+  <link rel="stylesheet" href="{% static 'css/bootstrap.css' %}">
+  <style>
+
+  </style>
+  <script src="{% static 'js/jquery.js' %}"></script>
+  <script src="{% static 'js/jquery-ui.js' %}"></script>
+  <script src="{% static 'js/bootstrap.js' %}"></script>
+  <script src="{% static 'js/jquery.formset.js' %}"></script>
+  <script>
+  $( function() {
+
+
+  {% block morejs %}
+
+
+    {% endblock %}
+
+
+  } ); /* main function */
+  </script>
+</head>
+<body>
+
+
+
+
+{% block content %}
+
+
+{% endblock %}
+
+</body>
+</html>
