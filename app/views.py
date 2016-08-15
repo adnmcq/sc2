@@ -28,35 +28,38 @@ from forms import IngredientLineForm
 
 
 def index(request):
-    return render(request, 'app/index.html', {'formset': ''})
+    return render(request, 'app/index.html', {})
 
-def recipe(request):
-    if 1:#recipe_id - if a recipe is already populated, set initial data for formset
+def recipe(request, id=None):
+    if id:
+        recipe = Recipe.objects.get(id=id)
+        #recipe_id - if a recipe is already populated, set initial data for formset
         #a model method on the recipe to get recipe.nuts['ingredients']
         init_ingredients = [{'food':'Candy','amt':12,'units':'cup'},{'food':'Bacon','amt':9,'units':'cup'}]
+    else:
+        init_ingredients = None
     IngredientsFormSet = formset_factory(IngredientLineForm, can_delete=True)
     if request.method == 'POST':
         formset = IngredientsFormSet(request.POST, request.FILES)
-        if formset.is_valid():
-            # do something with the formset.cleaned_data
+        if formset.is_valid():#maybe make a custom clean
+            #get food_item, food.nuts, amt, number and use it to build nuts (for recipe)
             for form in formset.ordered_forms:
                 print(form.cleaned_data)
+                #after getting all the stuff
+                #recipe = Recipe.objects.create(nuts=nuts, name=name)
     else:
         formset = IngredientsFormSet(initial=init_ingredients)
-    return render(request, 'app/index.html', {'formset': formset})
-
-
+    return render(request, 'app/recipe.html', {'formset': formset})
 
 def food_select_options(request):
+    json_resp_data = []
     if request.is_ajax():
         foods = Food.objects.all()#maybe ignore some
         q = request.GET.get('term', '')
         foods = foods.filter(name__icontains = q )#[:20]#(dispname__icontains = q )[:20]
-        json_resp_data=[]
         for f in foods:
             json_resp_data.append({'id':f.id,'label':f.name,'value':f.name})
     return JsonResponse(json_resp_data, safe=False)
-
 
 @csrf_exempt
 def unit_select_options(request):
