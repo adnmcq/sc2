@@ -29,7 +29,6 @@ from forms import IngredientLineForm
 
 def index(request):
     return render(request, 'app/index.html', {})
-
 def recipe(request, id=None):
     if id:
         #recipe = Recipe.objects.get(id=id)
@@ -55,6 +54,8 @@ def recipe(request, id=None):
     else:
         formset = IngredientsFormSet(initial=init_ingredients) #{'units': [u'Select a valid choice. serving is not one of the available choices.']}]
     return render(request, 'app/recipe.html', {'formset': formset})
+
+
 
 def food_select_options(request):
     json_resp_data = []
