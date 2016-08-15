@@ -38,7 +38,7 @@ def recipe(request, id=None):
         init_ingredients = [{'food':'Candy','amt':12,'units':'cup'},{'food':'Bacon','amt':9,'units':'cup'}]
     else:
         init_ingredients = None
-    IngredientsFormSet = formset_factory(IngredientLineForm, can_delete=True)
+    IngredientsFormSet = formset_factory(IngredientLineForm, can_delete=True, can_order=True)
     if request.method == 'POST':
         formset = IngredientsFormSet(request.POST, request.FILES)
         if formset.is_valid():#maybe make a custom clean
@@ -47,8 +47,10 @@ def recipe(request, id=None):
                 print(form.cleaned_data)
                 #after getting all the stuff
                 #recipe = Recipe.objects.create(nuts=nuts, name=name)
+        else:
+            print formset.errors
     else:
-        formset = IngredientsFormSet(initial=init_ingredients)
+        formset = IngredientsFormSet(initial=init_ingredients) #{'units': [u'Select a valid choice. serving is not one of the available choices.']}]
     return render(request, 'app/recipe.html', {'formset': formset})
 
 def food_select_options(request):
