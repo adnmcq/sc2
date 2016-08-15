@@ -32,9 +32,12 @@ def index(request):
 
 def recipe(request, id=None):
     if id:
-        recipe = Recipe.objects.get(id=id)
+        #recipe = Recipe.objects.get(id=id)
+
         #recipe_id - if a recipe is already populated, set initial data for formset
         #a model method on the recipe to get recipe.nuts['ingredients']
+
+        #before giving the value here for 'units', you need to pass in a choices tuple [(:),(:),(:)] that unit is a part of
         init_ingredients = [{'food':'Candy','amt':12,'units':'cup'},{'food':'Bacon','amt':9,'units':'cup'}]
     else:
         init_ingredients = None
