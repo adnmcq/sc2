@@ -24,7 +24,27 @@ class Food(models.Model):
             units = ['100 g']
         return units
 
-
+class Recipe(models.Model):
+    name = models.CharField('Name', max_length=200)
+    nuts = JSONField()
+    def __str__(self):  # __unicode__ on Python 2
+        return self.name
+    '''
+    def get_recipe_items(self):
+        #get recipe items for formset initial and nutritional info
+        nut = self.nuts[0]
+        units = []
+        try:
+            measures = nut['measures']
+            if len(measures)>0:
+                for m in measures:
+                    units.append(m['label'])
+            else:
+                units = ['100 g']
+        except KeyError:
+            units = ['100 g']
+        return units
+    '''
 
 
 '''

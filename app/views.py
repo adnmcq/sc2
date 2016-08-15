@@ -28,6 +28,9 @@ from forms import IngredientLineForm
 
 
 def index(request):
+    return render(request, 'app/index.html', {'formset': ''})
+
+def recipe(request):
     if 1:#recipe_id - if a recipe is already populated, set initial data for formset
         #a model method on the recipe to get recipe.nuts['ingredients']
         init_ingredients = [{'food':'Candy','amt':12,'units':'cup'},{'food':'Bacon','amt':9,'units':'cup'}]
