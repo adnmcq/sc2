@@ -30,31 +30,47 @@ from forms import IngredientLineForm
 def index(request):
     return render(request, 'app/index.html', {})
 
+
+
 def recipe(request, id=None):
     if id:
-        #recipe = Recipe.objects.get(id=id)
-
-        #recipe_id - if a recipe is already populated, set initial data for formset
-        #a model method on the recipe to get recipe.nuts['ingredients']
-
-        #before giving the value here for 'units', you need to pass in a choices tuple [(:),(:),(:)] that unit is a part of
-        init_ingredients = [{'food':'Candy','amt':12,'units':'cup'},{'food':'Bacon','amt':9,'units':'cup'}]
+        recipe = Recipe.objects.get(id=id)
+        init_ingredients_info = recipe.nuts['ingredients']
     else:
-        init_ingredients = None
+        init_ingredients_info = []
     IngredientsFormSet = formset_factory(IngredientLineForm, can_delete=True, can_order=True)
     if request.method == 'POST':
         formset = IngredientsFormSet(request.POST, request.FILES)
         if formset.is_valid():#maybe make a custom clean
-            #get food_item, food.nuts, amt, number and use it to build nuts (for recipe)
+            ingredients_list = []
             for form in formset.ordered_forms:
-                print(form.cleaned_data)
+                cd = form.cleaned_data
+                choices = Food.objects.get(name=cd['food']).get_units()
+                ingredients_list.append({'food':cd['food'],'units':cd['units'],'amt':cd['amt'],'choices':choices})
                 #after getting all the stuff
                 #recipe = Recipe.objects.create(nuts=nuts, name=name)
+            nuts = {'ingredients':ingredients_list}
+            if id:
+                recipe.nuts=nuts
+                recipe.save()
+            else:
+                recipe = Recipe.objects.create(nuts=nuts)
+            print recipe.nuts
         else:
             print formset.errors
     else:
-        formset = IngredientsFormSet(initial=init_ingredients) #{'units': [u'Select a valid choice. serving is not one of the available choices.']}]
+        formset = IngredientsFormSet() #{'units': [u'Select a valid choice. serving is not one of the available choices.']}]
+        for i,ingredient_info in enumerate(init_ingredients_info):
+            #get recipe nuts['ingredients']
+            #this ok - recipe only called if forloop hits
+            formset[i].fields['units'].choices = init_ingredients_info[i]['choices']
+            formset[i].fields['units'].initial = init_ingredients_info[i]['units']
+            formset[i].fields['amt'].initial = init_ingredients_info[i]['amt']#this actually needs to be set from recipe.nuts
+            formset[i].fields['food'].initial = init_ingredients_info[i]['food']#
+
     return render(request, 'app/recipe.html', {'formset': formset})
+
+
 
 def food_select_options(request):
     json_resp_data = []
