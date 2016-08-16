@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 from models import *
 from django.db.models import Count
 import json
-#from django.template import Context, Template
+
 
 from django.http import JsonResponse,HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -16,17 +16,6 @@ from forms import *
 
 from forms import IngredientLineForm
 
-#cn=hange name of index --> recipe
-#optional parameter to recipe - recipe id
-#make recipe model - name, nuts
-#but nuts also has ingredients[{'food':food.id,'amt':amt,'serving':serving},{..},{..}]
-#this ingredients is set on post
-#also nutriional facts for recipe calculated on post
-
-#if recipe id is passed into the index, first look up ingredients from recipe.nuts['ingredients']
-#use that to populate the formset (might have to make it a modelformset
-
-
 def index(request):
     return render(request, 'app/index.html', {})
 
@@ -36,19 +25,19 @@ def recipe(request, id=None):
     if id:
         recipe = Recipe.objects.get(id=id)
         init_ingredients_info = recipe.nuts['ingredients']
+        extra = len(init_ingredients_info)+1
     else:
+        extra = 1
         init_ingredients_info = []
-    IngredientsFormSet = formset_factory(IngredientLineForm, can_delete=True, can_order=True)
+    IngredientsFormSet = formset_factory(IngredientLineForm, can_delete=True, can_order=True, extra = extra)
     if request.method == 'POST':
         formset = IngredientsFormSet(request.POST, request.FILES)
-        if formset.is_valid():#maybe make a custom clean
+        if formset.is_valid():
             ingredients_list = []
             for form in formset.ordered_forms:
                 cd = form.cleaned_data
                 choices = Food.objects.get(name=cd['food']).get_units()
                 ingredients_list.append({'food':cd['food'],'units':cd['units'],'amt':cd['amt'],'choices':choices})
-                #after getting all the stuff
-                #recipe = Recipe.objects.create(nuts=nuts, name=name)
             nuts = {'ingredients':ingredients_list}
             if id:
                 recipe.nuts=nuts
@@ -56,6 +45,9 @@ def recipe(request, id=None):
             else:
                 recipe = Recipe.objects.create(nuts=nuts)
             print recipe.nuts
+            #{'ingredients': [{'food': u"AMY'S, CHEWY CANDY BARS, CARAMEL, PECANS & CHOCOLATE, UPC: 042272003891", 'units': u'serving', 'amt': u'2', 'choices': [u'serving']},
+            # {'food': u'Babyfood, banana apple dessert, strained', 'units': u'jar NFS', 'amt': u'1', 'choices': [u'tbsp', u'jar NFS', u'jar Gerber Second Food (4 oz)']}]}
+
         else:
             print formset.errors
     else:
@@ -63,7 +55,8 @@ def recipe(request, id=None):
         for i,ingredient_info in enumerate(init_ingredients_info):
             #get recipe nuts['ingredients']
             #this ok - recipe only called if forloop hits
-            formset[i].fields['units'].choices = init_ingredients_info[i]['choices']
+            print init_ingredients_info[i]['choices']
+            formset[i].fields['units'].choices = (('cup', 'cup'),('serving', 'serving'))#init_ingredients_info[i]['choices']
             formset[i].fields['units'].initial = init_ingredients_info[i]['units']
             formset[i].fields['amt'].initial = init_ingredients_info[i]['amt']#this actually needs to be set from recipe.nuts
             formset[i].fields['food'].initial = init_ingredients_info[i]['food']#
