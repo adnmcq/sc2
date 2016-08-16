@@ -1,5 +1,5 @@
 api-info.txt
 db.sqlite3
-.pyc
+*.pyc
 .idea/
 *.log
