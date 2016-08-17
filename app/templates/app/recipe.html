@@ -12,7 +12,7 @@
    <div class="form-inline line-item">
             {{ form.food }}
             {{ form.units }}
-          {{ form.amt }}
+          {{ form.val }}
  {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
 
        <!-- <span class='glyphicon glyphicon-remove remove_item' aria-hidden='true'></span> -->
@@ -56,7 +56,7 @@ response( data );
 select:function(event,ui) {
 
 var thisrow = $(this).closest('.form-inline');
-thisrow.find(".amt").val(1.00);
+thisrow.find(".val").val(1.00);
 
 $.post("{% url 'unit_select_options' %}", {item_id:ui.item.id},
 function(data) {

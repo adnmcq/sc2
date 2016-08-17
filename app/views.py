@@ -36,8 +36,33 @@ def recipe(request, id=None):
             ingredients_list = []
             for form in formset.ordered_forms:
                 cd = form.cleaned_data
+                food, units, val = cd['food'], cd['units'], cd['val']
                 choices = Food.objects.get(name=cd['food']).get_units()
-                ingredients_list.append({'food':cd['food'],'units':cd['units'],'amt':cd['amt'],'choices':choices})
+                ingredients_list.append({'food':food, 'units':units, 'val':val, 'choices':choices})
+                single_food_nutrients = Food.objects.get(name = food).nuts
+                recipe_nutrients = []
+                '''
+                single_food_nutrients
+                ----------------
+                see single_food_nutrients.txt
+                '''
+                for nut_dict in single_food_nutrients: #loop through nutrients for a food
+                    nut_name = nut_dict['name']
+                    try:
+                        nut_val = filter(lambda n: n.get('label') == units, nut_dict['measures'])[0]['value']
+                    except IndexError:
+                        nut_val = nut_dict['value']
+                    nut_unit = nut_dict['unit']
+                    #if this nutrient is not already present in the recipe nutrient dict, create it
+                    #make sure to match name AND units - handle if units don't match
+                    recipe_nutrient = filter(lambda n: (n.get('name') == nut_name and n.get('unit') == nut_unit), recipe_nutrients)
+                    if not recipe_nutrient:
+                        #equivalent already handled with val
+                        recipe_nutrients.append({'name':nut_name, 'unit':nut_unit, 'val':nut_val})
+                    else:#if is found, add new nutrientvalue
+                        recipe_nutrient[0]['val'] = recipe_nutrient['val'] + nut_val
+                    print 'recipe_nutrients', recipe_nutrients
+
             nuts = {'ingredients':ingredients_list}
             if id:
                 recipe.nuts=nuts
@@ -45,8 +70,8 @@ def recipe(request, id=None):
             else:
                 recipe = Recipe.objects.create(nuts=nuts)
             print recipe.nuts
-            #{'ingredients': [{'food': u"AMY'S, CHEWY CANDY BARS, CARAMEL, PECANS & CHOCOLATE, UPC: 042272003891", 'units': u'serving', 'amt': u'2', 'choices': [u'serving']},
-            # {'food': u'Babyfood, banana apple dessert, strained', 'units': u'jar NFS', 'amt': u'1', 'choices': [u'tbsp', u'jar NFS', u'jar Gerber Second Food (4 oz)']}]}
+            #{'ingredients': [{'food': u"AMY'S, CHEWY CANDY BARS, CARAMEL, PECANS & CHOCOLATE, UPC: 042272003891", 'units': u'serving', 'val': u'2', 'choices': [u'serving']},
+            # {'food': u'Babyfood, banana apple dessert, strained', 'units': u'jar NFS', 'val': u'1', 'choices': [u'tbsp', u'jar NFS', u'jar Gerber Second Food (4 oz)']}]}
 
         else:
             print formset.errors
@@ -58,7 +83,7 @@ def recipe(request, id=None):
             print init_ingredients_info[i]['choices']
             formset[i].fields['units'].choices = (('cup', 'cup'),('serving', 'serving'))#init_ingredients_info[i]['choices']
             formset[i].fields['units'].initial = init_ingredients_info[i]['units']
-            formset[i].fields['amt'].initial = init_ingredients_info[i]['amt']#this actually needs to be set from recipe.nuts
+            formset[i].fields['val'].initial = init_ingredients_info[i]['val']#this actually needs to be set from recipe.nuts
             formset[i].fields['food'].initial = init_ingredients_info[i]['food']#
 
     return render(request, 'app/recipe.html', {'formset': formset})
