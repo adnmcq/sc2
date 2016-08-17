@@ -26,7 +26,8 @@ class Food(models.Model):
 
 class Recipe(models.Model):
     name = models.CharField('Name', max_length=200)
-    nuts = JSONField()
+    ingredients = JSONField(null=True)
+    nuts = JSONField(null=True)
     def __str__(self):  # __unicode__ on Python 2
         return self.name
     '''

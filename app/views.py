@@ -1,4 +1,4 @@
-from django.shortcuts import render,HttpResponseRedirect
+from django.shortcuts import render,HttpResponseRedirect,HttpResponse
 from django.core.urlresolvers import reverse
 
 from models import *
@@ -22,6 +22,8 @@ def index(request):
 
 
 def recipe(request, id=None):
+    recipe_nutrients = []
+    ingredients_list = []
     if id:
         recipe = Recipe.objects.get(id=id)
         init_ingredients_info = recipe.nuts['ingredients']
@@ -33,14 +35,12 @@ def recipe(request, id=None):
     if request.method == 'POST':
         formset = IngredientsFormSet(request.POST, request.FILES)
         if formset.is_valid():
-            ingredients_list = []
             for form in formset.ordered_forms:
                 cd = form.cleaned_data
-                food, units, val = cd['food'], cd['units'], cd['val']
+                food, units, amt = cd['food'], cd['units'], cd['amt']
                 choices = Food.objects.get(name=cd['food']).get_units()
-                ingredients_list.append({'food':food, 'units':units, 'val':val, 'choices':choices})
+                ingredients_list.append({'food':food, 'units':units, 'amt':amt, 'choices':choices})
                 single_food_nutrients = Food.objects.get(name = food).nuts
-                recipe_nutrients = []
                 '''
                 single_food_nutrients
                 ----------------
@@ -61,15 +61,16 @@ def recipe(request, id=None):
                         recipe_nutrients.append({'name':nut_name, 'unit':nut_unit, 'val':nut_val})
                     else:#if is found, add new nutrientvalue
                         recipe_nutrient[0]['val'] = recipe_nutrient['val'] + nut_val
-                    print 'recipe_nutrients', recipe_nutrients
-
-            nuts = {'ingredients':ingredients_list}
+            #print 'recipe_nutrients', recipe_nutrients
+            #return HttpResponse(recipe_nutrients)
             if id:
-                recipe.nuts=nuts
+                recipe.ingredients = ingredients_list
+                recipe.nuts = recipe_nutrients
                 recipe.save()
             else:
-                recipe = Recipe.objects.create(nuts=nuts)
-            print recipe.nuts
+                recipe = Recipe.objects.create(ingredients = ingredients_list,nuts = recipe_nutrients)
+            #print recipe.nuts
+            return HttpResponse([recipe.nuts, recipe.ingredients])
             #{'ingredients': [{'food': u"AMY'S, CHEWY CANDY BARS, CARAMEL, PECANS & CHOCOLATE, UPC: 042272003891", 'units': u'serving', 'val': u'2', 'choices': [u'serving']},
             # {'food': u'Babyfood, banana apple dessert, strained', 'units': u'jar NFS', 'val': u'1', 'choices': [u'tbsp', u'jar NFS', u'jar Gerber Second Food (4 oz)']}]}
 
@@ -85,7 +86,6 @@ def recipe(request, id=None):
             formset[i].fields['units'].initial = init_ingredients_info[i]['units']
             formset[i].fields['val'].initial = init_ingredients_info[i]['val']#this actually needs to be set from recipe.nuts
             formset[i].fields['food'].initial = init_ingredients_info[i]['food']#
-
     return render(request, 'app/recipe.html', {'formset': formset})
 
 
