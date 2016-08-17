@@ -17,7 +17,7 @@ class CustomChoiceField(forms.ChoiceField):
 class IngredientLineForm(forms.Form):
     food = forms.CharField(widget=forms.TextInput(attrs={'class':'foods form-control'})) #class = food
     units = CustomChoiceField(widget=forms.Select(attrs={'class':'units form-control'}))
-    amt = forms.CharField(widget=forms.NumberInput(attrs={'class':'amt form-control'}))
+    val = forms.CharField(widget=forms.NumberInput(attrs={'class':'val form-control'}))
     #instead of passing initial to formset, I have to go one by one in form and pass as kwargs to forms in formset
     '''
     def __init__(self, *args, **kwargs):

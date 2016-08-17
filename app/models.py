@@ -12,14 +12,14 @@ class Food(models.Model):
         return self.name
     def get_units(self):
         nut = self.nuts[0]
-        units = []
+        units = ['100 g']
         try:
             measures = nut['measures']
             if len(measures)>0:
                 for m in measures:
                     units.append(m['label'])
             else:
-                units = ['100 g']
+                pass
         except KeyError:
             units = ['100 g']
         return units
