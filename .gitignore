@@ -3,3 +3,5 @@ db.sqlite3
 *.pyc
 .idea/
 *.log
+#this is my little test for work stuff
+openerp.py
