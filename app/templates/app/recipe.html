@@ -7,6 +7,9 @@
 
 <form method="post" action="" class="form-inline">
      {% csrf_token %}
+    {{rform.name.label_tag}}{{rform.name}}
+
+    <hr>
     {{ formset.management_form }}
     {% for form in formset %}
    <div class="form-inline line-item">

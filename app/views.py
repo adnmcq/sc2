@@ -26,16 +26,19 @@ def recipe(request, id=None):
     ingredients_list = []
     if id:
         recipe = Recipe.objects.get(id=id)
-        init_ingredients_info = recipe.nuts['ingredients']
+        init_ingredients_info = recipe.ingredients
         extra = len(init_ingredients_info)+1
     else:
+        recipe = None
         extra = 1
         init_ingredients_info = []
     IngredientsFormSet = formset_factory(IngredientLineForm, can_delete=True, can_order=True, extra = extra)
     if request.method == 'POST':
         formset = IngredientsFormSet(request.POST, request.FILES)
-        if formset.is_valid():
+        rform = RecipeForm(request.POST)
+        if formset.is_valid() and rform.is_valid():
             for form in formset.ordered_forms:
+                recipe = rform.save(commit=False) #do not commit twice
                 cd = form.cleaned_data
                 food, units, amt = cd['food'], cd['units'], cd['amt']
                 choices = Food.objects.get(name=cd['food']).get_units()
@@ -60,16 +63,10 @@ def recipe(request, id=None):
                         #equivalent already handled with val
                         recipe_nutrients.append({'name':nut_name, 'unit':nut_unit, 'val':nut_val})
                     else:#if is found, add new nutrientvalue
-                        recipe_nutrient[0]['val'] = recipe_nutrient['val'] + nut_val
-            #print 'recipe_nutrients', recipe_nutrients
-            #return HttpResponse(recipe_nutrients)
-            if id:
-                recipe.ingredients = ingredients_list
-                recipe.nuts = recipe_nutrients
-                recipe.save()
-            else:
-                recipe = Recipe.objects.create(ingredients = ingredients_list,nuts = recipe_nutrients)
-            #print recipe.nuts
+                        recipe_nutrient[0]['val'] = recipe_nutrient[0]['val'] + nut_val
+            recipe.ingredients = ingredients_list
+            recipe.nuts = recipe_nutrients
+            recipe.save()
             return HttpResponse([recipe.nuts, recipe.ingredients])
             #{'ingredients': [{'food': u"AMY'S, CHEWY CANDY BARS, CARAMEL, PECANS & CHOCOLATE, UPC: 042272003891", 'units': u'serving', 'val': u'2', 'choices': [u'serving']},
             # {'food': u'Babyfood, banana apple dessert, strained', 'units': u'jar NFS', 'val': u'1', 'choices': [u'tbsp', u'jar NFS', u'jar Gerber Second Food (4 oz)']}]}
@@ -77,6 +74,7 @@ def recipe(request, id=None):
         else:
             print formset.errors
     else:
+        rform = RecipeForm(instance = recipe)
         formset = IngredientsFormSet() #{'units': [u'Select a valid choice. serving is not one of the available choices.']}]
         for i,ingredient_info in enumerate(init_ingredients_info):
             #get recipe nuts['ingredients']
@@ -86,7 +84,7 @@ def recipe(request, id=None):
             formset[i].fields['units'].initial = init_ingredients_info[i]['units']
             formset[i].fields['val'].initial = init_ingredients_info[i]['val']#this actually needs to be set from recipe.nuts
             formset[i].fields['food'].initial = init_ingredients_info[i]['food']#
-    return render(request, 'app/recipe.html', {'formset': formset})
+    return render(request, 'app/recipe.html', {'rform':rform,'formset': formset})
 
 
 

@@ -1,5 +1,5 @@
 from django import forms
-
+from app.models import *
 
 '''
 I need a CustomChoiceField that accepts .choices (CharField won't take .choices)
@@ -20,3 +20,9 @@ class IngredientLineForm(forms.Form):
     amt = forms.CharField(widget=forms.NumberInput(attrs={'class':'amt form-control'}))
     #instead of passing initial to formset, I have to go one by one in form and pass as kwargs to forms in formset
 
+class RecipeForm(forms.ModelForm):
+    class Meta:
+        model = Recipe
+        fields = {'name',}
+        #widgets = {'ingredients': forms.HiddenInput(), 'nuts': forms.HiddenInput()}
+    name = forms.CharField()
