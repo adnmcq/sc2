@@ -27,11 +27,13 @@ def recipe(request, id=None):
     if id:
         recipe = Recipe.objects.get(id=id)
         init_ingredients_info = recipe.ingredients
+        init_nutrients_info = recipe.nuts
         extra = len(init_ingredients_info)+1
     else:
         recipe = None
         extra = 1
         init_ingredients_info = []
+        init_nutrients_info = []
     IngredientsFormSet = formset_factory(IngredientLineForm, can_delete=True, can_order=True, extra = extra)
     if request.method == 'POST':
         formset = IngredientsFormSet(request.POST, request.FILES)
@@ -67,7 +69,7 @@ def recipe(request, id=None):
             recipe.save()
             return HttpResponseRedirect(reverse('recipe', args=(recipe.id,)))#HttpResponse([recipe.nuts, recipe.ingredients])
         else:
-            print formset.errors
+            return HttpResponse(formset.errors)
     else:
         rform = RecipeForm(instance = recipe)
         formset = IngredientsFormSet() #{'units': [u'Select a valid choice. serving is not one of the available choices.']}]
@@ -80,7 +82,8 @@ def recipe(request, id=None):
             formset[i].fields['units'].initial = init_ingredients_info[i]['units']
             formset[i].fields['amt'].initial = init_ingredients_info[i]['amt']#this actually needs to be set from recipe.nuts
             formset[i].fields['food'].initial = init_ingredients_info[i]['food']#
-    return render(request, 'app/recipe.html', {'rform':rform,'formset': formset})
+    return render(request, 'app/recipe.html', {'rform':rform,'formset': formset,
+                                               'nutrients':init_nutrients_info})
 
 
 def food_select_options(request):
