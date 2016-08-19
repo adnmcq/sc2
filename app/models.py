@@ -10,19 +10,24 @@ class Food(models.Model):
     nuts = JSONField()
     def __str__(self):  # __unicode__ on Python 2
         return self.name
-    def get_units(self):
+    def get_units_choices(self):
+        '''
+        :return: a tuple to be passed into select field
+        '''
         nut = self.nuts[0]
-        units = ['100 g']
+        units_choices = [('100 g','100 g')]
         try:
             measures = nut['measures']
             if len(measures)>0:
                 for m in measures:
-                    units.append(m['label'])
+                    json_val = m['label']
+                    display = '%s (%s g)'%(m['label'],m['eqv'])
+                    units_choices.append((json_val,display))#choices as tuple
             else:
                 pass
         except KeyError:
-            units = ['100 g']
-        return units
+            pass
+        return units_choices
 
 class Recipe(models.Model):
     name = models.CharField('Name', max_length=200)
