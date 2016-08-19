@@ -7,12 +7,16 @@
 
 <form method="post" action="" class="form-inline">
      {% csrf_token %}
+    {{rform.name.label_tag}}{{rform.name}}
+
+    <hr>
     {{ formset.management_form }}
     {% for form in formset %}
    <div class="form-inline line-item">
             {{ form.food }}
+             {{ form.amt }}
             {{ form.units }}
-          {{ form.amt }}
+
  {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
 
        <!-- <span class='glyphicon glyphicon-remove remove_item' aria-hidden='true'></span> -->
@@ -67,7 +71,7 @@ this_select.empty();
 
 $.each(data, function(key, value) {
 
-this_select.append($("<option></option>").attr("value", value).text(value));
+this_select.append($("<option></option>").attr("value", value[0]).text(value[1]));
 });
 
 
