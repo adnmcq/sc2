@@ -28,12 +28,13 @@ def recipe(request, id=None):
         recipe = Recipe.objects.get(id=id)
         init_ingredients_info = recipe.ingredients
         init_nutrients_info = recipe.nuts
+        chart_labels = [n.get('name') for n in init_nutrients_info if n.get('val') >= 0.001]
+        chart_data = [n.get('val') for n in init_nutrients_info if n.get('val') >= 0.001]
         extra = len(init_ingredients_info)+1
     else:
         recipe = None
+        init_ingredients_info, init_nutrients_info, chart_data, chart_labels = [],[],[],[]
         extra = 1
-        init_ingredients_info = []
-        init_nutrients_info = []
     IngredientsFormSet = formset_factory(IngredientLineForm, can_delete=True, can_order=True, extra = extra)
     if request.method == 'POST':
         formset = IngredientsFormSet(request.POST, request.FILES)
@@ -47,22 +48,29 @@ def recipe(request, id=None):
                 choices = Food.objects.get(name=cd['food']).get_units_choices()
                 ingredients_list.append({'food':food, 'units':units, 'amt':amt, 'choices':choices})
                 single_food_nutrients = Food.objects.get(name = food).nuts
-                #EACH NUT DICT A NUTRIENT ie. Water or Vitamin E
+                #first iteration hits Water
                 for nut_dict in single_food_nutrients:
-                    nut_name = nut_dict['name'] #Water, Fat, etc.
+                    nut_name = nut_dict['name'] if nut_dict['name'] != 'Energy' else '%s (%s)'%(nut_dict['name'],nut_dict['unit'])#Water, Fat, etc.
                     nut_unit = nut_dict['unit']#gram or microgram - make sure these are consistent between DIFFERENT FOODS
-                    try:
-                        nut_serving_val = filter(lambda n: n.get('label') == units, nut_dict['measures'])[0]['value']
-                    except IndexError:
+                    nut_group = nut_dict['group'] #Proximates, Lipids, Vitamins, Minerals, Other
+                    #EQUIVALENT output - which is faster?
+                    #see speed_test.txt
+                    matching_measure = [n for n in nut_dict['measures'] if n.get('label') == units]
+                    #matching_measure = filter(lambda n: n.get('label') == units, nut_dict['measures'])
+                    if matching_measure:
+                        nut_serving_val = matching_measure[0]['value']
+                    else:
                         nut_serving_val = nut_dict['value']
-                    nut_val = nut_serving_val * amt #whatever the amt of servings (ie 5 cups) multiply
-                    #if this nutrient is not already present in the recipe_nutrientS dict, create it
-                    #make sure to match name AND units - handle if units don't match
-                    recipe_nutrient = filter(lambda n: (n.get('name') == nut_name and n.get('unit') == nut_unit), recipe_nutrients)
-                    if not recipe_nutrient:
-                        #equivalent already handled with val
-                        recipe_nutrients.append({'name':nut_name, 'unit':nut_unit, 'val':nut_val})
-                    else:#if is found, add new nutrientvalue
+                    nut_val = nut_serving_val * amt #total - measures * amt
+                    #EQUIVALENT
+                    recipe_nutrient = [n for n in recipe_nutrients if (n.get('name') == nut_name and n.get('unit') == nut_unit)]
+                    #recipe_nutrient = filter(lambda n: (n.get('name') == nut_name and n.get('unit') == nut_unit), recipe_nutrients)
+                    #TODO - figure out how to separate chart data into Macros, micros, etc etc
+                    if not recipe_nutrient: #update list with new nutrient
+                        recipe_nutrients.append({'name':nut_name, 'unit':nut_unit, 'val':nut_val, 'group':nut_group})
+                    else:
+                        #weirdly enough this works, updating 'a' in a dictionary
+                        #in a filtered_list = [{'a':x}] updates 'a' in original list [{'a':x}, {'b':y}]
                         recipe_nutrient[0]['val'] = recipe_nutrient[0]['val'] + nut_val
             recipe.ingredients = ingredients_list
             recipe.nuts = recipe_nutrients
@@ -83,7 +91,9 @@ def recipe(request, id=None):
             formset[i].fields['amt'].initial = init_ingredients_info[i]['amt']#this actually needs to be set from recipe.nuts
             formset[i].fields['food'].initial = init_ingredients_info[i]['food']#
     return render(request, 'app/recipe.html', {'rform':rform,'formset': formset,
-                                               'nutrients':init_nutrients_info})
+                                               'nutrients':init_nutrients_info,
+                                               'chart_labels':json.dumps(chart_labels),
+                                               'chart_data':json.dumps(chart_data)}) #use this to get the nutritional facts and data for charts
 
 
 def food_select_options(request):
