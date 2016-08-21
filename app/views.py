@@ -28,12 +28,26 @@ def recipe(request, id=None):
         recipe = Recipe.objects.get(id=id)
         init_ingredients_info = recipe.ingredients
         init_nutrients_info = recipe.nuts
-        chart_labels = [n.get('name') for n in init_nutrients_info if n.get('val') >= 0.001]
-        chart_data = [n.get('val') for n in init_nutrients_info if n.get('val') >= 0.001]
+        #whole chart
+        #chart_labels = [n.get('name') for n in init_nutrients_info if n.get('val') >= 0.001]
+        #chart_data = [n.get('val') for n in init_nutrients_info if n.get('val') >= 0.001]
+        #Proximates, Lipids, Vitamins, Minerals, Other
+        prox_labels = [n.get('name') for n in init_nutrients_info if (n.get('val') >= 0.001 and n.get('group')=='Proximates')]
+        prox_data = [n.get('val') for n in init_nutrients_info if (n.get('val') >= 0.001 and n.get('group')=='Proximates')]
+        lip_labels = [n.get('name') for n in init_nutrients_info if (n.get('val') >= 0.001 and n.get('group')=='Lipids')]
+        lip_data = [n.get('val') for n in init_nutrients_info if (n.get('val') >= 0.001 and n.get('group')=='Lipids')]
+        vit_labels = [n.get('name') for n in init_nutrients_info if (n.get('val') >= 0.001 and n.get('group')=='Vitamins')]
+        vit_data = [n.get('val') for n in init_nutrients_info if (n.get('val') >= 0.001 and n.get('group')=='Vitamins')]
+        min_labels = [n.get('name') for n in init_nutrients_info if (n.get('val') >= 0.001 and n.get('group')=='Minerals')]
+        min_data = [n.get('val') for n in init_nutrients_info if (n.get('val') >= 0.001 and n.get('group')=='Minerals')]
+        oth_labels = [n.get('name') for n in init_nutrients_info if (n.get('val') >= 0.001 and n.get('group')=='Other')]
+        oth_data = [n.get('val') for n in init_nutrients_info if (n.get('val') >= 0.001 and n.get('group')=='Other')]
         extra = len(init_ingredients_info)+1
     else:
         recipe = None
-        init_ingredients_info, init_nutrients_info, chart_data, chart_labels = [],[],[],[]
+        init_ingredients_info, init_nutrients_info = [],[]
+        prox_labels, prox_data, lip_data, lip_labels, vit_labels, vit_data, min_labels, min_data, oth_labels, oth_data= \
+        [],[],[],[],[],[],[],[],[],[]
         extra = 1
     IngredientsFormSet = formset_factory(IngredientLineForm, can_delete=True, can_order=True, extra = extra)
     if request.method == 'POST':
@@ -65,7 +79,6 @@ def recipe(request, id=None):
                     #EQUIVALENT
                     recipe_nutrient = [n for n in recipe_nutrients if (n.get('name') == nut_name and n.get('unit') == nut_unit)]
                     #recipe_nutrient = filter(lambda n: (n.get('name') == nut_name and n.get('unit') == nut_unit), recipe_nutrients)
-                    #TODO - figure out how to separate chart data into Macros, micros, etc etc
                     if not recipe_nutrient: #update list with new nutrient
                         recipe_nutrients.append({'name':nut_name, 'unit':nut_unit, 'val':nut_val, 'group':nut_group})
                     else:
@@ -92,8 +105,17 @@ def recipe(request, id=None):
             formset[i].fields['food'].initial = init_ingredients_info[i]['food']#
     return render(request, 'app/recipe.html', {'rform':rform,'formset': formset,
                                                'nutrients':init_nutrients_info,
-                                               'chart_labels':json.dumps(chart_labels),
-                                               'chart_data':json.dumps(chart_data)}) #use this to get the nutritional facts and data for charts
+                                               'prox_labels':json.dumps(prox_labels),
+                                               'prox_data':json.dumps(prox_data),
+                                               'lip_labels':json.dumps(lip_labels),
+                                               'lip_data':json.dumps(lip_data),
+                                               'vit_data':json.dumps(vit_data),
+                                               'vit_labels':json.dumps(vit_labels),
+                                               'min_data':json.dumps(min_data),
+                                               'min_labels':json.dumps(min_labels),
+                                               'oth_labels':json.dumps(oth_labels),
+                                               'oth_data':json.dumps(oth_data),
+                                                                       }) #use this to get the nutritional facts and data for charts
 
 
 def food_select_options(request):
